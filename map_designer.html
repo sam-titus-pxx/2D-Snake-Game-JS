@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" href="styles/style.css"/>
+  <link rel="stylesheet" href="styles/w3css.css"/>
+  <link rel="stylesheet" href="styles/fa-icons.css"/>
+  <title>Matrix Map</title>
+  
+  <style>
+   .grid-box{
+     height: 35px;
+     width: 35px;
+     border: 1px solid black;
+     margin: 0;
+     padding: 0;
+     font: 30px;
+   }
+  </style>
+  
+</head>
+<body>
+  
+  <div id="grid-matrix" class="grid-matrix w3-container w3-margin">
+    
+  </div>
+  
+  <div>
+    <center>
+      <table>
+        <tr>
+          <td></td>
+          <td><button id="btn-MU" class="w3-btn w3-large w3-blue grid-box">^</button></td>
+        </tr>
+        <tr>
+          <td><button id="btn-ML" class="w3-btn w3-large w3-blue grid-box">≤</button></td>
+          <td><button id="btn-MM" class="w3-btn w3-large w3-blue grid-box">ø</button></td>  
+          <td><button id="btn-MR" class="w3-btn w3-large w3-blue grid-box">≥</button></td>  
+        </tr>
+        <tr><td></td>
+          <td>
+           <button id="btn-MD" class="w3-btn w3-large w3-blue grid-box">×</button>
+          </td>
+        </tr>
+      </table>
+    </center>
+  </div>
+  
+</body>
+  
+  <script src="scripts/JQuery.js"></script>
+  <script src="scripts/matrix_control.js"></script>
+  <script src="scripts/matrix_control.js"></script>
+  <script src="scripts/MapControls.js"></script>
+
+<script>
+//strict;
+
+ var map_layout = "";
+ var prev_coord;
+  $(document).ready(()=>{
+    
+    $.get("scripts/map_layouts.txt",function(data,status){
+      if(status == "success"){
+        //console.log("DATA: "+data);
+        map_layout = data.split("\+")[4];
+       // console.log("LAYOUT: \n"+map_layout);
+      }
+    });
+   
+  setTimeout(function(){
+    loadMatrix(10,8);
+    //showNeighbours();
+    // console.log("LAYOUT: \n"+map_layout);
+    loadMap(map_layout);
+    displayMap();
+    
+    $("#btn-ML").click(function(){
+     movePlayerLeft();
+   });
+   $("#btn-MR").click(function(){
+     movePlayerRight();
+   });
+   $("#btn-MU").click(function(){
+     movePlayerUp();
+   });
+   $("#btn-MD").click(function(){
+     movePlayerDown();
+   });
+    
+    
+    var path = embark();
+    
+    var path_arr = path.split("\n");
+    
+    setTimeout(function(){
+      travel(path_arr.pop());
+      
+    $("btn-ai-move").click();
+    },1000);
+    
+  },1000);
+    
+     });
+
+function travel(path){
+ var x, y,prev_x, prev_y;
+ prev_coord = path;
+ var coord = path.split(",");
+ x = parseInt(coord[0]);
+ y = parseInt(coord[1]);
+  
+  if(prev_coord == null){
+    prev_coord = path;
+  }else{
+  detachNode(prev_x,prev_y);
+  setNode(x,y,"P");
+  prev_coord = path;
+  }
+}
+
+</script>
+
+</html>

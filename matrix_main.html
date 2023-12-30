@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" href="styles/style.css"/>
+  <link rel="stylesheet" href="styles/w3css.css"/>
+  <title>Matrix Map</title>
+  
+  <style>
+   .grid-box{
+     height: 35px;
+     width: 35px;
+     border: 1px solid black;
+     margin: 0;
+     padding: 0;
+     font: 30px;
+     background-image: url("assets/grass_pix.png"); 
+     background-position: center; /* Center the image */ 
+     background-repeat: no-repeat; /* Do not repeat the image */ 
+     background-size: cover; /* Resize the background image to cover the entire container */background-image: url("./image.png"); 
+     background-position: center; /* Center the image */ 
+     background-repeat: no-repeat; /* Do not repeat the image */ 
+     background-size: cover; /* Resize the background image to cover the entire container */
+   }
+  </style>
+  
+</head>
+<body>
+  
+  <div id="div1" class="w3-container w3-card-4 w3-section w3-padding">
+    <h2 id="hdr1" class="w3-center w3-text-teal w3-large"><u>=> CHOOSE GAME TYPE <=</u></h2>
+      <br>
+      <div id="div2">
+        <span class="w3-small">Select Preferred Game Mode </span>
+        <ul class="w3-medium w3-ul">
+          <li><input data-name="Runner" class="radio-select" id="block-runner" type="radio" name="game-select"> &nbsp<label for="block-runner"><b>BLOCK RUNNER</b></label></li>
+          <li><input data-name="Snake" class="radio-select" id="snake-game" type="radio" name="game-select"> &nbsp<label for="snake-game"><b>SNAKE GAME</b></label></li>
+        </ul>
+        <button id="btn-game-select" class="w3-button w3-right w3-blue">GO ➡</button>
+      </div>
+  </div>
+  
+    
+  <div id="grid-matrix" style="margin-bottom:0;" class="grid-matrix w3-container w3-margin">
+  </div>
+  
+    <span style="margin-top:0;" class="w3-margin-left w3-tiny"><u>DEVELOPED BY <b><i class="w3-text-teal">FATHERLY P. TITUS. <sup>©2000</sup></i></u></b></span>
+    
+  <div id="aux-panel">
+    <div id="stat-bar"></div>
+    <center>
+      <table>
+        <tr>
+          <td></td>
+          <td><button id="btn-MU" class="w3-btn w3-large w3-blue grid-box"><b>U</b></button></td>
+        </tr>
+        <tr>
+          <td><button id="btn-ML" class="w3-btn w3-large w3-text-white w3-blue grid-box"><b>L</b></button></td>
+          <td><button id="btn-MP" class="w3-btn w3-large w3-blue grid-box">🔴</button></td>  
+          <td><button id="btn-MR" class="w3-btn w3-large w3-blue grid-box"><b>R</b></button></td>  
+        </tr>
+        <tr><td></td>
+          <td>
+           <button id="btn-MD" class="w3-btn w3-large w3-blue grid-box"><b>D</b></button>
+          </td>
+        </tr>
+      </table>
+    </center> 
+    <button id="btn-auto-embark" type="button" class="w3-button w3-tiny w3-rouw3-button w3-blue">embark</button>
+  </div>
+  
+  <button id="btn-ai-move"></button>
+  
+</body>
+  
+  <script src="scripts/JQuery.js"></script>
+  <script src="scripts/matrix_control.js"></script>
+  <script src="scripts/MapControls.js"></script>
+  <script src="scripts/Snake.js"></script>
+
+<script>
+//strict;
+
+ var map_layout = "", map_option = 1, game_option;
+ var prev_coord;
+ var path, embark_path;
+ var move_interval;
+
+  $(document).ready(()=>{
+    
+   $("#btn-game-select").hide();
+   $("#aux-panel").hide();
+    
+   var radios = document.getElementsByClassName("radio-select");
+    for(var i = 0; i < radios.length; i++){
+      radios[i].addEventListener("click",function(){
+       $("#btn-game-select").show();
+       });
+    }
+
+    
+    $("#btn-game-select").click(function(){
+      game_option = document.querySelector("input[name='game-select']:checked").getAttribute("data-name");
+     
+      switch(game_option){
+       case "Runner" : //alert("Block Run Case");
+        $("#hdr1").html("<b><u>=> SELECT MAP <=</u></b>");
+        $("#div2").html(`${select_map_str}`);
+        $("#btn-map-select").click(function(){
+         map_option = parseInt(document.querySelector("#map-select").value);
+          
+        });
+        break;
+       case "Snake" : map_option = 0; break;
+      }
+      $("#div1").hide();
+      INIT_LOAD(game_option);
+    });
+      
+    $("#btn-ML").click(function(){
+     (game_option == "Runner")? movePlayerLeft():moveSnake("L");
+   });
+   $("#btn-MR").click(function(){
+     (game_option == "Runner")? movePlayerRight():moveSnake("R");
+   });
+   $("#btn-MU").click(function(){
+     (game_option == "Runner")? movePlayerUp():moveSnake("U");
+   });
+   $("#btn-MD").click(function(){
+     (game_option == "Runner")? movePlayerDown():moveSnake("D");
+   });
+   $("#btn-MP").click(function(){
+     (game_option == "Runner")? movePlayerDown():STOP();
+   });
+    
+   $("#btn-auto-embark").click(function(){  
+    path = embark_path = embark(); 
+     if(pathComputed() == true){
+     path_arr = path.split("\n");
+     move_interval = setInterval(function(){
+      move(path_arr.shift());
+      if(path_arr.length === 0){
+       computed_goal_node_path = false;
+       clearInterval(move_interval); 
+      }
+    //
+    },500); 
+     }else{
+       $(this).click();
+     }
+   });
+ });
+
+function INIT_LOAD(op){
+  var file = (op === "Runner")? "runner_map_layouts.txt": "snake_map_layouts.txt";
+    $.get("scripts/"+file,function(data,status){
+      if(status == "success"){
+        map_layout = data.split("\+")[map_option]; 
+       
+    setTimeout(function(){
+   /* loadMatrix(10,8);
+    loadMap(map_layout);
+    displayMap();*/
+    
+      if(op === "Runner"){
+        loadMatrix(10,8);
+        loadMap(map_layout);
+       }
+        else if(op === "Snake"){
+        loadMatrix(8,8);
+        loadMap(map_layout);
+        $("#stat-bar").html(score_bar);
+        Snake();
+        } 
+      displayMap();
+      $("#aux-panel").show();
+      },1000);
+    }
+    });
+    
+  } //end of INIT_LOAD()
+
+function travel(path){
+ var x, y,prev_x, prev_y;
+ prev_coord = path;
+ var coord = path.split(",");
+ x = parseInt(coord[0]);
+ y = parseInt(coord[1]);
+  
+  if(prev_coord == null){
+    prev_coord = path;
+  }else{
+  detachNode(prev_x,prev_y);
+  setNode(x,y,"P");
+  prev_coord = path;
+  }
+}
+
+      
+    var select_map_str = `
+    <p class="w3-small"> Please Select A Game Map.
+      <b><select style="width:65%;" id="map-select" class="w3-input w3-margin w3-teal">
+        <option selected="true" value="1">Runner Map #1</option>
+        <option  value="2">Runner Map #2</option>
+        <option  value="3">Runner Map #3</option>
+    </select></b>
+</p>
+      <br>
+      <button id="btn-map-select" class="w3-button w3-right w3-blue w3-round">GO ➡</button>
+      `;
+  var score_bar = `
+<div style="height:fit-content;width:65px;" class="w3-container w3-card-4 w3-padding-12 w3-margin w3-bar-teal w3-left">
+  <center><span>
+    <b><i id="level-count">1</i></b>&nbsp&nbsp<i><b>LVL</b></i>
+    <b><i id="score-count">0</i></b>&nbsp&nbsp<i>💰</i>
+    <b><i id="health-count">3</i></b>&nbsp&nbsp<i>❤</i>
+    
+  </span></center>
+</div>
+`;
+</script>
+
+</html>
